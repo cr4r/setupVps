@@ -1,7 +1,8 @@
+sudo echo "sudo apt-get update&&sudo apt-get upgrade -y&&sudo apt-get dist-upgrade -y&&sudo apt-get autoremove -y" > /bin/update&&sudo chmod 777 /bin/update
 sudo apt-get install curl wget git python3 apache2 nginx-full libc6 libstdc++6 ufw -y &>/dev/null
-sudo ufw enable -y&&sudo ufw allow 22&&sudo ufw allow http&&sudo ufw allow https &>/dev/null
+#sudo ufw enable -y&&sudo ufw allow 22&&sudo ufw allow http&&sudo ufw allow https &>/dev/null
 read -p 'domain untuk code-server: ' link
-wget https://github.com/cdr/code-server/releases/download/v3.5.0/code-server_3.5.0_amd64.deb&&sudo dpkg -i code*.deb
+wget https://github.com/cdr/code-server/releases/download/v3.5.0/code-server_3.5.0_amd64.deb &>/dev/null&&sudo dpkg -i code*.deb &>/dev/null
 sudo echo """[Unit]
 Description=code-server
 After=nginx.service
@@ -9,13 +10,13 @@ After=nginx.service
 [Service]
 Type=simple
 Environment=PASSWORD=12312312
-ExecStart=/usr/bin/code-server --bind-addr 127.0.0.1:8080 --user-data-dir /home/ --auth password
+ExecStart=/usr/bin/code-server --bind-addr 127.0.0.1:8080 --user-data-dir /home --auth password
 Restart=always
 
 [Install]
-WantedBy=multi-user.target""" > /lib/systemd/system/code.service
-sudo systemctl start code &>/dev/null
-sudo systemctl enable code &>/dev/null
+WantedBy=multi-user.target""" > /lib/systemd/system/code-server.service
+sudo systemctl start code-server &>/dev/null
+sudo systemctl enable code-server &>/dev/null
 sudo echo """server {
     listen 1906;
 
@@ -27,17 +28,66 @@ sudo echo """server {
       proxy_set_header Connection upgrade;
       proxy_set_header Accept-Encoding gzip;
     }
-}""" > /etc/nginx/sites-available/code.conf
-sudo ln -s /etc/nginx/sites-available/code.conf /etc/nginx/sites-enabled/code.conf &>/dev/null
+}""" > /etc/nginx/sites-available/code-server.conf
+sudo ln -s /etc/nginx/sites-available/code-server.conf /etc/nginx/sites-enabled/code-server.conf &>/dev/null
 sudo nginx -t 
 sudo systemctl restart nginx
 rm code*
 
 sudo apt install python3-certbot-nginx -y &>/dev/null
 read -p 'email untuk ssl code-server: ' mail
-sudo certbot --nginx -d cd.cr4r.me $link -$mail -A -Y -2
+######## install ssl untuk code server #####################
+read -p 'apakah anda mau install ssl untuk code-server: ' jwb
+
+sudo certbot --nginx -d $link --standalone --agree-tos --register-unsafely-without-email
+
+echo """# This file contains important security parameters. If you modify this file
+# manually, Certbot will be unable to automatically provide future security
+# updates. Instead, Certbot will print and log an error message with a path to
+# the up-to-date file that you will need to refer to when manually updating
+# this file.
+ssl_protocols TLSv1.2 TLSv1.3;# Requires nginx >= 1.13.0 else use TLSv1.2
+ssl_prefer_server_ciphers on; 
+ssl_ciphers EECDH+AESGCM:EDH+AESGCM;
+ssl_ecdh_curve secp384r1; # Requires nginx >= 1.1.0
+ssl_session_timeout  10m;
+ssl_stapling on; # Requires nginx >= 1.3.7
+ssl_stapling_verify on; # Requires nginx => 1.3.7
+resolver_timeout 5s; 
+ssl_session_cache shared:le_nginx_SSL:1m;
+ssl_session_cache shared:SSL:10m;
+ssl_session_tickets off;
+resolver 1.1.1.1 1.0.0.1 valid=300s;
+
+add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+add_header X-Frame-Options SAMEORIGIN;
+add_header X-Content-Type-Options nosniff;
+add_header X-Frame-Options DENY;
+add_header X-XSS-Protection "1; mode=block";
+""">/etc/letsencrypt/options-ssl-nginx.conf
+
+echo """server {
+  listen 443 ssl http2;
+
+  server_name $url;
+
+  location / {
+    proxy_pass http://localhost:8080/;
+    proxy_set_header Upgrade \$http_upgrade;
+    proxy_set_header Connection upgrade;
+    proxy_set_header Accept-Encoding gzip;
+  }
+
+  ssl_certificate /etc/letsencrypt/live/\$url/fullchain.pem; # managed by Certbot
+  ssl_certificate_key /etc/letsencrypt/live/\$url/privkey.pem; # managed by Certbot
+  ssl_trusted_certificate /etc/letsencrypt/live/\$url/chain.pem; # managed by Certbot
+  include /etc/letsencrypt/options-ssl-nginx.conf; # managed by Certbot
+  ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem; # managed by Certbot
+}""">/etc/nginx/sites-available/code-server.conf
+
+service nginx
 ##################################################################
-cd /opt&&sudo chmod -R 755 ./&&sudo wget https://nodejs.org/dist/v12.18.3/node-v12.18.3-linux-x64.tar.xz &>/dev/null&&tar -xvf node-* &>/dev/null
+cd /opt&&sudo chmod -R 755 ./&&sudo wget https://nodejs.org/dist/v12.18.3/node-v12.18.3-linux-x64.tar.xz &>/dev/null&&sudo tar -xvf node-* &>/dev/null
 echo """# NodeJS
 export NODEJS_HOME=/opt/node-v12.18.3-linux-x64/bin
-export PATH=\$NODEJS_HOME:\$PATH""">>/etc/bash.bashrc
+export PATH=\$NODEJS_HOME:\$PATH""" >> /etc/bash.bashrc
