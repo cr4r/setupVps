@@ -2,7 +2,7 @@ sudo echo "sudo apt-get update&&sudo apt-get upgrade -y&&sudo apt-get dist-upgra
 sudo apt-get install curl wget git python3 apache2 nginx-full libc6 libstdc++6 ufw -y &>/dev/null
 #sudo ufw enable -y&&sudo ufw allow 22&&sudo ufw allow http&&sudo ufw allow https &>/dev/null
 read -p 'domain untuk code-server: ' link
-wget https://github.com/cdr/code-server/releases/download/v3.5.0/code-server_3.5.0_amd64.deb &>/dev/null&&sudo dpkg -i code*.deb &>/dev/null
+wget https://github.com/cdr/code-server/releases/download/v3.6.1/code-server_3.6.1_amd64.deb &>/dev/null&&sudo dpkg -i code*.deb &>/dev/null
 sudo echo """[Unit]
 Description=code-server
 After=nginx.service
@@ -59,11 +59,11 @@ ssl_session_cache shared:SSL:10m;
 ssl_session_tickets off;
 resolver 1.1.1.1 1.0.0.1 valid=300s;
 
-add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+add_header Strict-Transport-Security \"max-age=31536000; includeSubDomains\" always;
 add_header X-Frame-Options SAMEORIGIN;
 add_header X-Content-Type-Options nosniff;
 add_header X-Frame-Options DENY;
-add_header X-XSS-Protection "1; mode=block";
+add_header X-XSS-Protection \"1; mode=block\";
 """>/etc/letsencrypt/options-ssl-nginx.conf
 
 echo """server {
@@ -78,16 +78,16 @@ echo """server {
     proxy_set_header Accept-Encoding gzip;
   }
 
-  ssl_certificate /etc/letsencrypt/live/\$url/fullchain.pem; # managed by Certbot
-  ssl_certificate_key /etc/letsencrypt/live/\$url/privkey.pem; # managed by Certbot
-  ssl_trusted_certificate /etc/letsencrypt/live/\$url/chain.pem; # managed by Certbot
+  ssl_certificate /etc/letsencrypt/live/$url/fullchain.pem; # managed by Certbot
+  ssl_certificate_key /etc/letsencrypt/live/$url/privkey.pem; # managed by Certbot
+  ssl_trusted_certificate /etc/letsencrypt/live/$url/chain.pem; # managed by Certbot
   include /etc/letsencrypt/options-ssl-nginx.conf; # managed by Certbot
   ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem; # managed by Certbot
 }""">/etc/nginx/sites-available/code-server.conf
 
-service nginx
+service nginx restart
 ##################################################################
-cd /opt&&sudo chmod -R 755 ./&&sudo wget https://nodejs.org/dist/v12.18.3/node-v12.18.3-linux-x64.tar.xz &>/dev/null&&sudo tar -xvf node-* &>/dev/null
+cd /opt&&sudo chmod -R 755 ./&&sudo wget https://nodejs.org/download/release/v14.14.0/node-v14.14.0-linux-x64.tar.gz &>/dev/null&&sudo tar -xvf node-* &>/dev/null
 echo """# NodeJS
-export NODEJS_HOME=/opt/node-v12.18.3-linux-x64/bin
-export PATH=\$NODEJS_HOME:\$PATH""" >> /etc/bash.bashrc
+export NODEJS_HOME=/opt/node-v14.14.0-linux-x64/bin
+export PATH=\$NODEJS_HOME:\$PATH""" >>/etc/bash.bashrc&&. /etc/bash.bashrc
