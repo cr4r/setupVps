@@ -1,8 +1,9 @@
-sudo echo "sudo apt-get update&&sudo apt-get upgrade -y&&sudo apt-get dist-upgrade -y&&sudo apt-get autoremove -y" > /bin/update&&sudo chmod 777 /bin/update
+#Lakukan sudo su
+echo "sudo apt-get update&&sudo apt-get upgrade -y&&sudo apt-get dist-upgrade -y&&sudo apt-get autoremove -y" > /bin/update&&sudo chmod 777 /bin/update
 sudo apt-get install curl wget git python3 apache2 nginx-full libc6 libstdc++6 ufw -y &>/dev/null
 #sudo ufw enable -y&&sudo ufw allow 22&&sudo ufw allow http&&sudo ufw allow https &>/dev/null
 read -p 'domain untuk code-server: ' link
-wget https://github.com/cdr/code-server/releases/download/v3.9.0/code-server_3.9.0_amd64.deb &>/dev/null&&sudo dpkg -i code*.deb &>/dev/null
+wget https://github.com/cdr/code-server/releases/download/v3.9.3/code-server_3.9.3_amd64.deb &>/dev/null&&sudo dpkg -i code*.deb &>/dev/null
 sudo echo """[Unit]
 Description=code-server
 After=nginx.service
