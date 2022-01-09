@@ -44,11 +44,11 @@ aturFirewall () {
 installModule(){
     msg -bar
     msg -ama "Membuat module update, untuk mempermudah user dalam mengupdate sistem"
-    msg -ama "Silahkan ketik, 'update' untuk mengupdate sistem"
     echo "sudo apt-get update&&sudo apt-get upgrade -y&&sudo apt-get dist-upgrade -y&&sudo apt-get autoremove -y" > /bin/update&&sudo chmod 777 /bin/update
+    msg -ama "Silahkan ketik, 'update' untuk mengupdate sistem"
+    msg -bar
     msg -ama "Menginstall Module"
     sudo apt-get install curl wget git python3 apache2 nginx-full libc6 libstdc++6 ufw -y &>/dev/null
-    
     while [[ ${onfirewall} != @(s|S|y|Y|n|N) ]]; do
         read -p "$(msg -ama "Apakah anda ingin menghidupkan firewall?: ")" onfirewall
         tput cuu1 && tput dl1
@@ -78,9 +78,9 @@ buatVariabel() {
 installCodeServer () {
     msg -bar
     versicod="4.0.1"
-    msg -ama "Download code server"
+    msg -ama "Download code server versi $versicod"
     wget https://github.com/coder/code-server/releases/download/v$versicod/code-server_"$versicod"_amd64.deb &>/dev/null&&sudo dpkg -i code*.deb &>/dev/null
-    while [[ ${onfirewall} != @(s|S|y|Y|n|N|t|T) ]]; do
+    while [[ ${yesHttps} != @(s|S|y|Y|n|N|t|T) ]]; do
         read -p "$(msg -ama "Apakah anda ingin menginstall Mode HTTPS:") " yesHttps
         tput cuu1 && tput dl1
     done
@@ -103,7 +103,7 @@ Restart=always
 [Install]
 WantedBy=multi-user.target
     """ > /lib/systemd/system/code-server.service
-    sudo systemctl start code-server &>/dev/null
+    systemctl start code-server &>/dev/null
     
     if [[ $(dpkg --get-selections|grep -w "apache2"|head -1) ]];then
         msg -ama "Sedang menghentikan apache2"
@@ -111,10 +111,10 @@ WantedBy=multi-user.target
     fi
     
     msg -ama "Menghidupkan code server secara otomatis"
-    sudo systemctl enable code-server &>/dev/null
+    systemctl enable code-server &>/dev/null
     
     msg -ama "Mensetting nginx untuk code server"
-    sudo echo """server {
+    echo """server {
     listen $porthttp;
 
     server_name $link;
@@ -126,11 +126,11 @@ WantedBy=multi-user.target
       proxy_set_header Accept-Encoding gzip;
     }
     }""" > /etc/nginx/sites-available/code-server.conf
-    rm /etc/nginx/sites-available/default /etc/nginx/sites-enabled/default
-    sudo ln -s /etc/nginx/sites-available/code-server.conf /etc/nginx/sites-enabled/code-server.conf &>/dev/null
-    sudo nginx -t &>/dev/null
+    rm /etc/nginx/sites-available/default /etc/nginx/sites-enabled/default &>/dev/null
+    ln -s /etc/nginx/sites-available/code-server.conf /etc/nginx/sites-enabled/code-server.conf &>/dev/null
+    nginx -t &>/dev/null
     msg -ama "Merestart nginx"
-    sudo systemctl restart nginx &>/dev/null
+    systemctl restart nginx &>/dev/null
     rm code* &>/dev/null
     
     if [[ yesHttps = @(s|S|y|Y) ]];then
@@ -210,3 +210,4 @@ add_header X-XSS-Protection \"1; mode=block\";
 
 installModule
 buatVariabel
+installCodeServer
