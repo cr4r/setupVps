@@ -43,12 +43,36 @@ aturFirewall () {
 
 installModule(){
     msg -bar
-    msg -ama "Membuat module update, untuk mempermudah user dalam mengupdate sistem"
+    msg -ama "Membuat module update"
+    msg -ama "Untuk mempermudah user dalam mengupdate sistem"
     echo "sudo apt-get update&&sudo apt-get upgrade -y&&sudo apt-get dist-upgrade -y&&sudo apt-get autoremove -y" > /bin/update&&sudo chmod 777 /bin/update
     msg -ama "Silahkan ketik, 'update' untuk mengupdate sistem"
     msg -bar
-    msg -ama "Menginstall Module"
-    sudo apt-get install curl wget git python3 apache2 nginx-full libc6 libstdc++6 ufw -y &>/dev/null
+    msg -ama "Menginstall Module ..."
+    sudo apt-get install curl &>/dev/null
+    tput cuu1 && tput dl1
+    sudo apt-get install wget -y &>/dev/null
+    msg -ama "Menginstall Module ..."
+    sudo apt-get install git -y &>/dev/null
+    tput cuu1 && tput dl1
+    msg -ama "Menginstall Module ..."
+    sudo apt-get install python3 -y &>/dev/null
+    tput cuu1 && tput dl1
+    msg -ama "Menginstall Module ..."
+    sudo apt-get install apache2 -y &>/dev/null
+    tput cuu1 && tput dl1
+    msg -ama "Menginstall Module ..."
+    sudo apt-get install nginx-full -y &>/dev/null
+    tput cuu1 && tput dl1
+    msg -ama "Menginstall Module ..."
+    sudo apt-get install libc6 -y &>/dev/null
+    tput cuu1 && tput dl1
+    msg -ama "Menginstall Module ..."
+    sudo apt-get install libstdc++6 -y &>/dev/null
+    tput cuu1 && tput dl1
+    msg -ama "Menginstall Module ..."
+    sudo apt-get install ufw -y &>/dev/null
+    tput cuu1 && tput dl1
     while [[ ${onfirewall} != @(s|S|y|Y|n|N) ]]; do
         read -p "$(msg -ama "Apakah anda ingin menghidupkan firewall?: ")" onfirewall
         tput cuu1 && tput dl1
@@ -88,7 +112,6 @@ installCodeServer () {
     if [[ yesHttps = @(s|S|y|Y) ]];then
         porthttp=80
     fi
-    
     
     sudo echo """[Unit]
 Description=code-server
