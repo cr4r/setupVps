@@ -73,17 +73,18 @@ installModule(){
     msg -ama "Menginstall Module ..."
     sudo apt-get install ufw -y &>/dev/null
     tput cuu1 && tput dl1
+    msg -ama "Selesai!"
+}
+
+buatVariabel() {
+    msg -bar
     while [[ ${onfirewall} != @(s|S|y|Y|n|N) ]]; do
-        read -p "$(msg -ama "Apakah anda ingin menghidupkan firewall?: ")" onfirewall
+        read -p "$(msg -ama "Apakah anda ingin menghidupkan firewall? (Y/T): ")" onfirewall
         tput cuu1 && tput dl1
     done
     if [[ onfirewall = @(s|S|y|Y) ]];then
         aturFirewall on
     fi
-}
-
-buatVariabel() {
-    msg -bar
     while [[ ${link} = "" ]]; do
         read -p "$(msg -ama "Domain untuk code-server:") " link
         tput cuu1 && tput dl1
