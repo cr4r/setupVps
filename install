@@ -47,7 +47,6 @@ installModule(){
     msg -ama "Untuk mempermudah user dalam mengupdate sistem"
     echo "sudo apt-get update&&sudo apt-get upgrade -y&&sudo apt-get dist-upgrade -y&&sudo apt-get autoremove -y" > /bin/update&&sudo chmod 777 /bin/update
     msg -ama "Silahkan ketik, 'update' untuk mengupdate sistem"
-    msg -bar
     msg -ama "Menginstall Module ..."
     sudo apt-get install curl &>/dev/null
     tput cuu1 && tput dl1
@@ -74,6 +73,7 @@ installModule(){
     sudo apt-get install ufw -y &>/dev/null
     tput cuu1 && tput dl1
     msg -ama "Selesai!"
+    msg -bar
 }
 
 buatVariabel() {
@@ -82,6 +82,7 @@ buatVariabel() {
         read -p "$(msg -ama "Apakah anda ingin menghidupkan firewall? (Y/T): ")" onfirewall
         tput cuu1 && tput dl1
     done
+    msg -ama "Firewall Hidup ? $onfirewall"
     if [[ onfirewall = @(s|S|y|Y) ]];then
         aturFirewall on
     fi
@@ -89,15 +90,18 @@ buatVariabel() {
         read -p "$(msg -ama "Domain untuk code-server:") " link
         tput cuu1 && tput dl1
     done
+    msg -ama "Domain code server: $link"
     while [[ ${linkportNginx} = "" ]]; do
         read -p "$(msg -ama "Port untuk akses vs code:") " linkportNginx
         tput cuu1 && tput dl1
     done
+    msg -ama "Port code server: $linkPortNginx"
     while [[ ${passwordLogin} = "" ]]; do
         read -p "$(msg -ama "Password Login untuk akses vs code:") " passwordLogin
         tput cuu1 && tput dl1
     done
     pCode="1905"
+    msg -ama "Port untuk code server: $passwordLogin"
 }
 
 installCodeServer () {
