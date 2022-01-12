@@ -105,7 +105,7 @@ float_data () {
 installModule
 buatVariabel
 
-tool () {
+tooll () {
     msg -bar "Menu Alat"
     script[0]="Kembali"
     local Numb=1
@@ -117,7 +117,9 @@ tool () {
     done
     
     selection=$(selection_fun $Numb)
-    [[ -e "${installer}/${script[$selection]}" ]] &&{ ${installer}/${script[$selection]} } || return 0
+    [[ -e "${SCPfrm}/${script[$selection]}" ]] && {
+        ${SCPfrm}/${script[$selection]} ${id}
+    }
 }
 
-tool
+tooll
