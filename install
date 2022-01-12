@@ -117,8 +117,8 @@ tooll () {
     done
     
     selection=$(selection_fun $Numb)
-    [[ -e "${SCPfrm}/${script[$selection]}" ]] && {
-        ${SCPfrm}/${script[$selection]} ${id}
+    [[ -e "${installer}/${script[$selection]}" ]] && {
+        ${installer}/${script[$selection]} ${id}
     }
 }
 
