@@ -73,6 +73,19 @@ buatVariabel() {
 }
 export -f buatVariabel
 
+selection_fun () {
+    local selection="null"
+    local range
+    for((i=0; i<=$1; i++)); do range[$i]="$i "; done
+    while [[ ! $(echo ${range[*]}|grep -w "$selection") ]]; do
+        echo -ne "\033[1;37mPilih opsi: " >&2
+        read selection
+        tput cuu1 >&2 && tput dl1 >&2
+    done
+    echo $selection
+}
+export -f selection_fun
+
 float_data () {
     ofc="\033[0m${gren}(#OFC)"
     dev="\033[0m${gren}(#DEV)"
@@ -94,6 +107,7 @@ buatVariabel
 
 tool(){
     msg -bar "Menu Alat"
+    script[0]="Kembali"
     local Numb=1
     for arqs in $(ls ${installer}); do
         float_data "$arqs" "$Numb" && {
@@ -101,6 +115,9 @@ tool(){
             let Numb++
         }
     done
+    
+    selection=$(selection_fun $Numb)
+    [[ -e "${installer}/${script[$selection]}" ]] &&{ ${installer}/${script[$selection]} ${id} } || return
 }
 
 tool
