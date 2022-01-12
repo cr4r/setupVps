@@ -91,6 +91,15 @@ buatVariabel() {
 }
 export -f buatVariabel
 
+float_data () {
+    ofc="\033[0m${gren}(#OFC)"
+    dev="\033[0m${gren}(#DEV)"
+    bet="\033[0m${gren}(#BET)"
+    case $1 in
+        "code-server.sh")echo -ne "$(msg -verd "[$2]") $(msg -verm2 ">") " && msg -azu "Code Server";;
+        *)echo -ne "$(msg -verd "[$2]") $(msg -verm2 ">") " && msg -azu "${1^^} \033[1;33m($(fun_trans "Tanpa deskripsi")!)";;
+    esac
+}
 
 ##################################################################
 # cd /opt&&sudo chmod -R 755 ./&&sudo wget https://nodejs.org/download/release/v14.14.0/node-v14.14.0-linux-x64.tar.gz &>/dev/null&&sudo tar -xvf node-* &>/dev/null
@@ -103,8 +112,8 @@ buatVariabel
 
 local Numb=1
 for arqs in $(ls ${installer}); do
-float_data "$arqs" "$Numb" && {
-  script[$Numb]="$arqs"
-  let Numb++
-  }
+    float_data "$arqs" "$Numb" && {
+        script[$Numb]="$arqs"
+        let Numb++
+    }
 done
