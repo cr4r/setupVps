@@ -117,7 +117,7 @@ tool(){
     done
     
     selection=$(selection_fun $Numb)
-    [[ -e "${installer}/${script[$selection]}" ]] &&{ ${installer}/${script[$selection]} ${id} } || return 0
+    [[ -e "${installer}/${script[$selection]}" ]] &&{ ${installer}/${script[$selection]} } || return 0
 }
 
 tool
