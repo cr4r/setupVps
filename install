@@ -47,29 +47,29 @@ installModule(){
     msg -ama "Untuk mempermudah user dalam mengupdate sistem"
     echo "sudo apt-get update&&sudo apt-get upgrade -y&&sudo apt-get dist-upgrade -y&&sudo apt-get autoremove -y" > /bin/update&&sudo chmod 777 /bin/update
     msg -ama "Silahkan ketik, 'update' untuk mengupdate sistem"
-    msg -ama "Menginstall Module ..."
+    msg -ama "(1) Menginstall Module ..."
     sudo apt-get install curl &>/dev/null
     tput cuu1 && tput dl1
     sudo apt-get install wget -y &>/dev/null
-    msg -ama "Menginstall Module ..."
+    msg -ama "(2) Menginstall Module ..."
     sudo apt-get install git -y &>/dev/null
     tput cuu1 && tput dl1
-    msg -ama "Menginstall Module ..."
+    msg -ama "(3) Menginstall Module ..."
     sudo apt-get install python3 -y &>/dev/null
     tput cuu1 && tput dl1
-    msg -ama "Menginstall Module ..."
+    msg -ama "(4) Menginstall Module ..."
     sudo apt-get install apache2 -y &>/dev/null
     tput cuu1 && tput dl1
-    msg -ama "Menginstall Module ..."
+    msg -ama "(5) Menginstall Module ..."
     sudo apt-get install nginx-full -y &>/dev/null
     tput cuu1 && tput dl1
-    msg -ama "Menginstall Module ..."
+    msg -ama "(6) Menginstall Module ..."
     sudo apt-get install libc6 -y &>/dev/null
     tput cuu1 && tput dl1
-    msg -ama "Menginstall Module ..."
+    msg -ama "(7) Menginstall Module ..."
     sudo apt-get install libstdc++6 -y &>/dev/null
     tput cuu1 && tput dl1
-    msg -ama "Menginstall Module ..."
+    msg -ama "(8) Menginstall Module ..."
     sudo apt-get install ufw -y &>/dev/null
     tput cuu1 && tput dl1
     msg -ama "Selesai!"
@@ -108,7 +108,7 @@ installCodeServer () {
     versicod="4.0.1"
     msg -ama "Download code server versi $versicod"
     wget https://github.com/coder/code-server/releases/download/v$versicod/code-server_"$versicod"_amd64.deb &>/dev/null
-    msg -ama "Menginstall Code Server"
+    msg -ama "Menginstall Code Server..."
     sudo dpkg -i code*.deb &>/dev/null
     while [[ ${yesHttps} != @(s|S|y|Y|n|N|t|T) ]]; do
         read -p "$(msg -ama "Apakah anda ingin menginstall Mode HTTPS:") " yesHttps
@@ -126,35 +126,37 @@ After=nginx.service
 [Service]
 Type=simple
 Environment=PASSWORD=$passwordLogin
-ExecStart=/usr/bin/code-server --bind-addr 127.0.0.1:1905 --user-data-dir /home --auth password
+ExecStart=/usr/bin/code-server --bind-addr 127.0.0.1:$pCode --user-data-dir /home --auth password
 Restart=always
 
 [Install]
 WantedBy=multi-user.target
     """ > /lib/systemd/system/code-server.service
+    msg -ama "Memulai code server..."
     systemctl start code-server &>/dev/null
     
     if [[ $(dpkg --get-selections|grep -w "apache2"|head -1) ]];then
-        msg -ama "Sedang menghentikan apache2"
+        msg -ama "Sedang menghentikan apache2..."
         service apache2 stop
     fi
     
-    msg -ama "Menghidupkan code server secara otomatis"
+    msg -ama "Menghidupkan code server secara otomatis..."
     systemctl enable code-server &>/dev/null
     
-    msg -ama "Mensetting nginx untuk code server"
+    msg -ama "Menyeting nginx untuk code server..."
     echo """server {
-    listen $porthttp;
+listen $porthttp;
 
-    server_name $link;
+server_name $link;
 
-    location / {
-      proxy_pass http://localhost:$pCode/;
-      proxy_set_header Upgrade \$http_upgrade;
-      proxy_set_header Connection upgrade;
-      proxy_set_header Accept-Encoding gzip;
+location / {
+    proxy_pass http://localhost:$pCode/;
+    proxy_set_header Upgrade \$http_upgrade;
+    proxy_set_header Connection upgrade;
+    proxy_set_header Accept-Encoding gzip;
     }
-    }""" > /etc/nginx/sites-available/code-server.conf
+}
+    """ > /etc/nginx/sites-available/code-server.conf
     rm /etc/nginx/sites-available/default /etc/nginx/sites-enabled/default &>/dev/null
     ln -s /etc/nginx/sites-available/code-server.conf /etc/nginx/sites-enabled/code-server.conf &>/dev/null
     nginx -t &>/dev/null
@@ -162,24 +164,27 @@ WantedBy=multi-user.target
     systemctl restart nginx &>/dev/null
     rm code* &>/dev/null
     
-    if [[ yesHttps = @(s|S|y|Y) ]];then
+    if [[ $yesHttps = @(s|S|y|Y) ]];then
         httpsCode
+    else
+        msg -ama "Setup code server selesai"
+        msg -ama "Silahkan buka localhost:$linkportNginx"
     fi
 }
 
 
 httpsCode () {
     msg -bar
-    msg -ama "Menginstall Certbot"
+    msg -ama "====== Menginstall Certbot ======"
     sudo apt install python3-certbot-nginx -y &>/dev/null
     
     msg -ama "Harap isi semua yang diperlukan"
     msg -ama "Lalu akan muncul Pilihan 1 atau 2"
     msg -ama "Pilih 1 saja"
-    msg -ne "$(fun_trans "Enter untuk melanjutkan")" && read enter
+    msg -ne "Enter untuk melanjutkan" && read enter
+    tput cuu1 && tput dl1
     
     ######## install ssl untuk code server #####################
-    echo "Pilih 1 ya"
     sudo certbot --nginx -d $link --agree-tos --register-unsafely-without-email
     
     msg -ama "Sedang mengatur SSL - 2020 - Grade A+"
@@ -208,6 +213,7 @@ add_header X-Frame-Options DENY;
 add_header X-XSS-Protection \"1; mode=block\";
     """>/etc/letsencrypt/options-ssl-nginx.conf
     
+    msg -ama "Mengatur port https di nginx"
     echo """server {
   listen $portNginx ssl http2;
 
