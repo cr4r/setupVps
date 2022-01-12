@@ -50,31 +50,14 @@ installModule(){
     msg -ama "Untuk mempermudah user dalam mengupdate sistem"
     echo "sudo apt-get update&&sudo apt-get upgrade -y&&sudo apt-get dist-upgrade -y&&sudo apt-get autoremove -y" > /bin/update&&sudo chmod 777 /bin/update
     msg -ama "Silahkan ketik, 'update' untuk mengupdate sistem"
-    msg -ama "(1) Menginstall Module ..."
-    sudo apt-get install curl &>/dev/null
-    tput cuu1 && tput dl1
-    sudo apt-get install wget -y &>/dev/null
-    msg -ama "(2) Menginstall Module ..."
-    sudo apt-get install git -y &>/dev/null
-    tput cuu1 && tput dl1
-    msg -ama "(3) Menginstall Module ..."
-    sudo apt-get install python3 -y &>/dev/null
-    tput cuu1 && tput dl1
-    msg -ama "(4) Menginstall Module ..."
-    sudo apt-get install apache2 -y &>/dev/null
-    tput cuu1 && tput dl1
-    msg -ama "(5) Menginstall Module ..."
-    sudo apt-get install nginx-full -y &>/dev/null
-    tput cuu1 && tput dl1
-    msg -ama "(6) Menginstall Module ..."
-    sudo apt-get install libc6 -y &>/dev/null
-    tput cuu1 && tput dl1
-    msg -ama "(7) Menginstall Module ..."
-    sudo apt-get install libstdc++6 -y &>/dev/null
-    tput cuu1 && tput dl1
-    msg -ama "(8) Menginstall Module ..."
-    sudo apt-get install ufw -y &>/dev/null
-    tput cuu1 && tput dl1
+    [[ $(dpkg --get-selections|grep -w "curl"|head -1) ]] || msg -ama "(1) Menginstall Module ..."&&apt-get install curl -y &>/dev/null&&tput cuu1 && tput dl1
+    [[ $(dpkg --get-selections|grep -w "wget"|head -1) ]] || msg -ama "(2) Menginstall Module ..."&&apt-get install wget -y &>/dev/null&&tput cuu1 && tput dl1
+    [[ $(dpkg --get-selections|grep -w "git"|head -1) ]] || msg -ama "(3) Menginstall Module ..."&&apt-get install git -y &>/dev/null&&tput cuu1 && tput dl1
+    [[ $(dpkg --get-selections|grep -w "apache2"|head -1) ]] || msg -ama "(3) Menginstall Module ..."&&apt-get install apache2 -y &>/dev/null&&tput cuu1 && tput dl1
+    [[ $(dpkg --get-selections|grep -w "libc6"|head -1) ]] || msg -ama "(3) Menginstall Module ..."&&apt-get install libc6 -y &>/dev/null&&tput cuu1 && tput dl1
+    [[ $(dpkg --get-selections|grep -w "nginx-full"|head -1) ]] || msg -ama "(3) Menginstall Module ..."&&apt-get install nginx-full -y &>/dev/null&&tput cuu1 && tput dl1
+    [[ $(dpkg --get-selections|grep -w "libstdc++6"|head -1) ]] || msg -ama "(3) Menginstall Module ..."&&apt-get install libstdc++6 -y &>/dev/null&&tput cuu1 && tput dl1
+    [[ $(dpkg --get-selections|grep -w "ufw"|head -1) ]] || msg -ama "(3) Menginstall Module ..."&&apt-get install ufw -y &>/dev/null&&tput cuu1 && tput dl1
     msg -ama "Menginstall Module Selesai!"
 }
 
@@ -110,10 +93,13 @@ float_data () {
 installModule
 buatVariabel
 
-local Numb=1
-for arqs in $(ls ${installer}); do
-    float_data "$arqs" "$Numb" && {
-        script[$Numb]="$arqs"
-        let Numb++
-    }
-done
+tool(){
+    msg -bar "Menu Alat"
+    local Numb=1
+    for arqs in $(ls ${installer}); do
+        float_data "$arqs" "$Numb" && {
+            script[$Numb]="$arqs"
+            let Numb++
+        }
+    done
+}
