@@ -215,7 +215,7 @@ add_header X-XSS-Protection \"1; mode=block\";
     
     msg -ama "Mengatur port https di nginx"
     echo """server {
-  listen $portNginx ssl http2;
+  listen $linkportNginx ssl http2;
 
   server_name $link;
 
