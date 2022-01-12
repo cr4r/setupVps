@@ -1,5 +1,7 @@
 #!/bin/bash
 
+installer="./installer" && [[ ! -d ${installer} ]] && mkdir ${installer}
+
 if [[ "${EUID}" -ne 0 ]]; then
     msg -verm "Kamu harus jalankan script ini mode root"
     exit 1
@@ -18,7 +20,7 @@ msg () {
         "-bar2"|"-bar")cor="${AZUL}${NEGRITO}———————————————————————— ${2} ————————————————————————————" && echo -e "${SEMCOR}${cor}${SEMCOR}";;
     esac
 }
-
+export -f msg
 
 # Lakukan sudo su
 
@@ -40,6 +42,7 @@ aturFirewall () {
         done
     fi
 }
+export -f msg
 
 installModule(){
     msg -bar "Tahap awal"
@@ -85,166 +88,10 @@ buatVariabel() {
     if [[ onfirewall = @(s|S|y|Y) ]];then
         aturFirewall on
     fi
-    while [[ ${link} = "" ]]; do
-        read -p "$(msg -ama "Domain/IP untuk code-server:") " link
-        tput cuu1 && tput dl1
-    done
-    msg -ama "Domain/IP code server: $link"
-    while [[ ${linkportNginx} = "" ]]; do
-        read -p "$(msg -ama "Port untuk akses vs code:") " linkportNginx
-        tput cuu1 && tput dl1
-    done
-    msg -ama "Port code server: $linkportNginx"
-    while [[ ${passwordLogin} = "" ]]; do
-        read -p "$(msg -ama "Password Login untuk akses vs code:") " passwordLogin
-        tput cuu1 && tput dl1
-    done
-    pCode="1905"
-    msg -ama "Port untuk code server: $passwordLogin"
 }
-
-installCodeServer () {
-    msg -bar "Tahap kedua"
-    versicod="4.0.1"
-    msg -ama "Download code server versi $versicod"
-    wget https://github.com/coder/code-server/releases/download/v$versicod/code-server_"$versicod"_amd64.deb &>/dev/null
-    msg -ama "Menginstall Code Server..."
-    sudo dpkg -i code*.deb &>/dev/null
-    while [[ ${yesHttps} != @(s|S|y|Y|n|N|t|T) ]]; do
-        read -p "$(msg -ama "Apakah anda ingin menginstall Mode HTTPS:") " yesHttps
-        tput cuu1 && tput dl1
-    done
-    porthttp=$linkportNginx
-    if [[ yesHttps = @(s|S|y|Y) ]];then
-        porthttp=80
-    fi
-    
-    sudo echo """[Unit]
-Description=code-server
-After=nginx.service
-
-[Service]
-Type=simple
-Environment=PASSWORD=$passwordLogin
-ExecStart=/usr/bin/code-server --bind-addr 127.0.0.1:$pCode --user-data-dir /home --auth password
-Restart=always
-
-[Install]
-WantedBy=multi-user.target
-    """ > /lib/systemd/system/code-server.service
-    msg -ama "Memulai code server..."
-    systemctl start code-server &>/dev/null
-    
-    if [[ $(dpkg --get-selections|grep -w "apache2"|head -1) ]];then
-        msg -ama "Sedang menghentikan apache2..."
-        service apache2 stop
-    fi
-    
-    msg -ama "Menghidupkan code server secara otomatis..."
-    systemctl enable code-server &>/dev/null
-    
-    msg -ama "Menyeting nginx untuk code server..."
-    echo """server {
-listen $porthttp;
-
-server_name $link;
-
-location / {
-    proxy_pass http://localhost:$pCode/;
-    proxy_set_header Upgrade \$http_upgrade;
-    proxy_set_header Connection upgrade;
-    proxy_set_header Accept-Encoding gzip;
-    }
-}
-    """ > /etc/nginx/sites-available/code-server.conf
-    rm /etc/nginx/sites-available/default /etc/nginx/sites-enabled/default &>/dev/null
-    ln -s /etc/nginx/sites-available/code-server.conf /etc/nginx/sites-enabled/code-server.conf &>/dev/null
-    nginx -t &>/dev/null
-    msg -ama "Merestart nginx"
-    systemctl restart nginx &>/dev/null
-    rm code* &>/dev/null
-    
-    if [[ $yesHttps = @(s|S|y|Y) ]];then
-        httpsCode
-    else
-        msg -ama "Setup code server selesai"
-        msg -ama "Silahkan buka localhost:$linkportNginx"
-    fi
-}
+export -f buatVariabel
 
 
-httpsCode () {
-    msg -bar "Tahap Terakhir"
-    msg -ne "Untuk menginstall ssl"
-    msg -ne "Harus mempunyai domain!" && read enter
-    tput cuu1 && tput dl1
-    read -e -p "$(msg -ama "IP untuk code-server:") " -i $link
-    while [[ ${link} = "" ]]; do
-        read -p "$(msg -ama "IP untuk code-server:") " link
-        tput cuu1 && tput dl1
-    done
-    msg -ama "====== Menginstall Certbot ======"
-    sudo apt install python3-certbot-nginx -y &>/dev/null
-    
-    msg -ama "Harap isi semua yang diperlukan"
-    msg -ama "Lalu akan muncul Pilihan 1 atau 2"
-    msg -ama "Pilih 1 saja"
-    msg -ne "Enter untuk melanjutkan" && read enter
-    tput cuu1 && tput dl1
-    
-    ######## install ssl untuk code server #####################
-    sudo certbot --nginx -d $link --agree-tos --register-unsafely-without-email
-    
-    msg -ama "Sedang mengatur SSL - 2020 - Grade A+"
-    echo """# This file contains important security parameters. If you modify this file
-# manually, Certbot will be unable to automatically provide future security
-# updates. Instead, Certbot will print and log an error message with a path to
-# the up-to-date file that you will need to refer to when manually updating
-# this file.
-ssl_protocols TLSv1.2 TLSv1.3;# Requires nginx >= 1.13.0 else use TLSv1.2
-ssl_prefer_server_ciphers on;
-ssl_ciphers EECDH+AESGCM:EDH+AESGCM;
-ssl_ecdh_curve secp384r1; # Requires nginx >= 1.1.0
-ssl_session_timeout  10m;
-ssl_stapling on; # Requires nginx >= 1.3.7
-ssl_stapling_verify on; # Requires nginx => 1.3.7
-resolver_timeout 5s;
-ssl_session_cache shared:le_nginx_SSL:1m;
-ssl_session_cache shared:SSL:10m;
-ssl_session_tickets off;
-resolver 1.1.1.1 1.0.0.1 valid=300s;
-
-add_header Strict-Transport-Security \"max-age=31536000; includeSubDomains\" always;
-add_header X-Frame-Options SAMEORIGIN;
-add_header X-Content-Type-Options nosniff;
-add_header X-Frame-Options DENY;
-add_header X-XSS-Protection \"1; mode=block\";
-    """>/etc/letsencrypt/options-ssl-nginx.conf
-    
-    msg -ama "Mengatur port https di nginx"
-    echo """server {
-  listen $linkportNginx ssl http2;
-
-  server_name $link;
-
-  location / {
-    proxy_pass http://localhost:$pCode/;
-    proxy_set_header Upgrade \$http_upgrade;
-    proxy_set_header Connection upgrade;
-    proxy_set_header Accept-Encoding gzip;
-  }
-
-  ssl_certificate /etc/letsencrypt/live/$link/fullchain.pem; # managed by Certbot
-  ssl_certificate_key /etc/letsencrypt/live/$link/privkey.pem; # managed by Certbot
-  ssl_trusted_certificate /etc/letsencrypt/live/$link/chain.pem; # managed by Certbot
-  include /etc/letsencrypt/options-ssl-nginx.conf; # managed by Certbot
-  ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem; # managed by Certbot
-    }""">/etc/nginx/sites-available/code-server.conf
-    msg -ama "Mengatur SSL Selesai!"
-    msg -ama "Sedang merestart Nginx"
-    service nginx restart
-    msg -ama "Merestart Selesai!"
-}
 ##################################################################
 # cd /opt&&sudo chmod -R 755 ./&&sudo wget https://nodejs.org/download/release/v14.14.0/node-v14.14.0-linux-x64.tar.gz &>/dev/null&&sudo tar -xvf node-* &>/dev/null
 # echo """# NodeJS
@@ -253,4 +100,11 @@ add_header X-XSS-Protection \"1; mode=block\";
 
 installModule
 buatVariabel
-installCodeServer
+
+local Numb=1
+for arqs in $(ls ${installer}); do
+float_data "$arqs" "$Numb" && {
+  script[$Numb]="$arqs"
+  let Numb++
+  }
+done
