@@ -80,7 +80,7 @@ float_data () {
     bet="\033[0m${gren}(#BET)"
     case $1 in
         "code-server.sh")echo -ne "$(msg -verd "[$2]") $(msg -verm2 ">") " && msg -azu "Code Server";;
-        *)echo -ne "$(msg -verd "[$2]") $(msg -verm2 ">") " && msg -azu "${1^^} \033[1;33m($(fun_trans "Tanpa deskripsi")!)";;
+        *)echo -ne "$(msg -verd "[$2]") $(msg -verm2 ">") " && msg -azu "${1^^} \033[1;33m(Tanpa deskripsi!)";;
     esac
 }
 
@@ -103,3 +103,5 @@ tool(){
         }
     done
 }
+
+tool
