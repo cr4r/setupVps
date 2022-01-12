@@ -15,7 +15,7 @@ msg () {
         -azu)cor="${MAG}${NEGRITO}" && echo -e "${cor}${2}${SEMCOR}";;
         -verd)cor="${VERDE}${NEGRITO}" && echo -e "${cor}${2}${SEMCOR}";;
         -bra)cor="${BRAN}${NEGRITO}" && echo -ne "${cor}${2}${SEMCOR}";;
-        "-bar2"|"-bar")cor="${AZUL}${NEGRITO}——————————————————————————————————————————————————————" && echo -e "${SEMCOR}${cor}${SEMCOR}";;
+        "-bar2"|"-bar")cor="${AZUL}${NEGRITO}———————————————————————— ${2} ————————————————————————————" && echo -e "${SEMCOR}${cor}${SEMCOR}";;
     esac
 }
 
@@ -42,7 +42,7 @@ aturFirewall () {
 }
 
 installModule(){
-    msg -bar
+    msg -bar "Tahap awal"
     msg -ama "Membuat module update"
     msg -ama "Untuk mempermudah user dalam mengupdate sistem"
     echo "sudo apt-get update&&sudo apt-get upgrade -y&&sudo apt-get dist-upgrade -y&&sudo apt-get autoremove -y" > /bin/update&&sudo chmod 777 /bin/update
@@ -76,7 +76,7 @@ installModule(){
 }
 
 buatVariabel() {
-    msg -bar
+    msg -bar "Pertanyaan"
     while [[ ${onfirewall} != @(s|S|y|Y|n|N) ]]; do
         read -p "$(msg -ama "Apakah anda ingin menghidupkan firewall? (Y/T): ")" onfirewall
         tput cuu1 && tput dl1
@@ -104,7 +104,7 @@ buatVariabel() {
 }
 
 installCodeServer () {
-    msg -bar
+    msg -bar "Tahap kedua"
     versicod="4.0.1"
     msg -ama "Download code server versi $versicod"
     wget https://github.com/coder/code-server/releases/download/v$versicod/code-server_"$versicod"_amd64.deb &>/dev/null
@@ -174,7 +174,7 @@ location / {
 
 
 httpsCode () {
-    msg -bar
+    msg -bar "Tahap Terakhir"
     msg -ama "====== Menginstall Certbot ======"
     sudo apt install python3-certbot-nginx -y &>/dev/null
     
