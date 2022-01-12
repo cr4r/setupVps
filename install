@@ -72,7 +72,7 @@ installModule(){
     msg -ama "(8) Menginstall Module ..."
     sudo apt-get install ufw -y &>/dev/null
     tput cuu1 && tput dl1
-    msg -ama "Selesai!"
+    msg -ama "Menginstall Module Selesai!"
 }
 
 buatVariabel() {
@@ -86,10 +86,10 @@ buatVariabel() {
         aturFirewall on
     fi
     while [[ ${link} = "" ]]; do
-        read -p "$(msg -ama "Domain untuk code-server:") " link
+        read -p "$(msg -ama "Domain/IP untuk code-server:") " link
         tput cuu1 && tput dl1
     done
-    msg -ama "Domain code server: $link"
+    msg -ama "Domain/IP code server: $link"
     while [[ ${linkportNginx} = "" ]]; do
         read -p "$(msg -ama "Port untuk akses vs code:") " linkportNginx
         tput cuu1 && tput dl1
@@ -175,6 +175,14 @@ location / {
 
 httpsCode () {
     msg -bar "Tahap Terakhir"
+    msg -ne "Untuk menginstall ssl"
+    msg -ne "Harus mempunyai domain!" && read enter
+    tput cuu1 && tput dl1
+    read -e -p "$(msg -ama "IP untuk code-server:") " -i $link
+    while [[ ${link} = "" ]]; do
+        read -p "$(msg -ama "IP untuk code-server:") " link
+        tput cuu1 && tput dl1
+    done
     msg -ama "====== Menginstall Certbot ======"
     sudo apt install python3-certbot-nginx -y &>/dev/null
     
