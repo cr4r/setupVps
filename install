@@ -105,7 +105,7 @@ float_data () {
 installModule
 buatVariabel
 
-tool(){
+tool () {
     msg -bar "Menu Alat"
     script[0]="Kembali"
     local Numb=1
