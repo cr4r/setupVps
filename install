@@ -97,7 +97,7 @@ float_data () {
 }
 
 ##################################################################
-# cd /opt&&sudo chmod -R 755 ./&&sudo wget https://nodejs.org/download/release/v14.14.0/node-v14.14.0-linux-x64.tar.gz &>/dev/null&&sudo tar -xvf node-* &>/dev/null
+# cd /opt&&sudo chmod -R 755 ./&&sudo wget https://nodejs.org/download/release/latest/node-v17.3.1-linux-x64.tar.gz &>/dev/null&&sudo tar -xvf node-* &>/dev/null
 # echo """# NodeJS
 # export NODEJS_HOME=/opt/node-v14.14.0-linux-x64/bin
 # export PATH=\$NODEJS_HOME:\$PATH""" >>/etc/bash.bashrc&&. /etc/bash.bashrc

@@ -95,7 +95,7 @@ httpsCode () {
     msg -ne "Untuk menginstall ssl"
     msg -ne "Harus mempunyai domain!" && read enter
     tput cuu1 && tput dl1
-    read -e -p "$(msg -ama "IP untuk code-server:") " -i $link
+    read -e -p "$(msg -ama "Domain untuk code-server:") " -i $link
     while [[ ${link} = "" ]]; do
         read -p "$(msg -ama "IP untuk code-server:") " link
         tput cuu1 && tput dl1
@@ -161,6 +161,8 @@ add_header X-XSS-Protection \"1; mode=block\";
     msg -ama "Sedang merestart Nginx"
     service nginx restart
     msg -ama "Merestart Selesai!"
+    
+    [[ $(dpkg --get-selections|grep -w "ufw"|head -1) ]] || (ufw allow $linkportNginx &>/dev/null)
 }
 
 buatVariabelCode
