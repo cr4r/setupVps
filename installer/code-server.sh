@@ -20,9 +20,9 @@ buatVariabelCode() {
     msg -ama "Port untuk code server: $passwordLogin"
 }
 
-installCodeServer () {
+installCodeServer() {
     msg -bar "Tahap kedua"
-    versicod="4.0.1"
+    versicod="4.5.2"
     msg -ama "Download code server versi $versicod"
     wget https://github.com/coder/code-server/releases/download/v$versicod/code-server_"$versicod"_amd64.deb &>/dev/null
     msg -ama "Menginstall Code Server..."
@@ -32,10 +32,10 @@ installCodeServer () {
         tput cuu1 && tput dl1
     done
     porthttp=$linkportNginx
-    if [[ yesHttps = @(s|S|y|Y) ]];then
+    if [[ yesHttps = @(s|S|y|Y) ]]; then
         porthttp=80
     fi
-    
+
     sudo echo """[Unit]
 Description=code-server
 After=nginx.service
@@ -48,18 +48,18 @@ Restart=always
 
 [Install]
 WantedBy=multi-user.target
-    """ > /lib/systemd/system/code-server.service
+    """ >/lib/systemd/system/code-server.service
     msg -ama "Memulai code server..."
     systemctl start code-server &>/dev/null
-    
-    if [[ $(dpkg --get-selections|grep -w "apache2"|head -1) ]];then
+
+    if [[ $(dpkg --get-selections | grep -w "apache2" | head -1) ]]; then
         msg -ama "Sedang menghentikan apache2..."
         service apache2 stop
     fi
-    
+
     msg -ama "Menghidupkan code server secara otomatis..."
     systemctl enable code-server &>/dev/null
-    
+
     msg -ama "Menyeting nginx untuk code server..."
     echo """server {
 listen $porthttp;
@@ -73,15 +73,15 @@ location / {
     proxy_set_header Accept-Encoding gzip;
     }
 }
-    """ > /etc/nginx/sites-available/code-server.conf
+    """ >/etc/nginx/sites-available/code-server.conf
     rm /etc/nginx/sites-available/default /etc/nginx/sites-enabled/default &>/dev/null
     ln -s /etc/nginx/sites-available/code-server.conf /etc/nginx/sites-enabled/code-server.conf &>/dev/null
     nginx -t &>/dev/null
     msg -ama "Merestart nginx"
     systemctl restart nginx &>/dev/null
     rm code* &>/dev/null
-    
-    if [[ $yesHttps = @(s|S|y|Y) ]];then
+
+    if [[ $yesHttps = @(s|S|y|Y) ]]; then
         httpsCode
     else
         msg -ama "Setup code server selesai"
@@ -89,8 +89,7 @@ location / {
     fi
 }
 
-
-httpsCode () {
+httpsCode() {
     msg -bar "Tahap Terakhir"
     msg -ne "Untuk menginstall ssl"
     msg -ne "Harus mempunyai domain!" && read enter
@@ -102,16 +101,16 @@ httpsCode () {
     done
     msg -ama "====== Menginstall Certbot ======"
     sudo apt install python3-certbot-nginx -y &>/dev/null
-    
+
     msg -ama "Harap isi semua yang diperlukan"
     msg -ama "Lalu akan muncul Pilihan 1 atau 2"
     msg -ama "Pilih 1 saja"
     msg -ne "Enter untuk melanjutkan" && read enter
     tput cuu1 && tput dl1
-    
+
     ######## install ssl untuk code server #####################
     sudo certbot --nginx -d $link --agree-tos --register-unsafely-without-email
-    
+
     msg -ama "Sedang mengatur SSL - 2020 - Grade A+"
     echo """# This file contains important security parameters. If you modify this file
 # manually, Certbot will be unable to automatically provide future security
@@ -136,8 +135,8 @@ add_header X-Frame-Options SAMEORIGIN;
 add_header X-Content-Type-Options nosniff;
 add_header X-Frame-Options DENY;
 add_header X-XSS-Protection \"1; mode=block\";
-    """>/etc/letsencrypt/options-ssl-nginx.conf
-    
+    """ >/etc/letsencrypt/options-ssl-nginx.conf
+
     msg -ama "Mengatur port https di nginx"
     echo """server {
   listen $linkportNginx ssl http2;
@@ -156,13 +155,13 @@ add_header X-XSS-Protection \"1; mode=block\";
   ssl_trusted_certificate /etc/letsencrypt/live/$link/chain.pem; # managed by Certbot
   include /etc/letsencrypt/options-ssl-nginx.conf; # managed by Certbot
   ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem; # managed by Certbot
-    }""">/etc/nginx/sites-available/code-server.conf
+    }""" >/etc/nginx/sites-available/code-server.conf
     msg -ama "Mengatur SSL Selesai!"
     msg -ama "Sedang merestart Nginx"
     service nginx restart
     msg -ama "Merestart Selesai!"
-    
-    [[ $(dpkg --get-selections|grep -w "ufw"|head -1) ]] || (ufw allow $linkportNginx &>/dev/null)
+
+    [[ $(dpkg --get-selections | grep -w "ufw" | head -1) ]] || (ufw allow $linkportNginx &>/dev/null)
 }
 
 buatVariabelCode
