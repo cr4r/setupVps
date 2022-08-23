@@ -1,42 +1,82 @@
 #!/bin/bash
 
 buatVariabelCode() {
-    msg -bar "Pertanyaan"
-    while [[ ${link} = "" ]]; do
-        read -p "$(msg -ama "Domain/IP untuk code-server:") " link
-        tput cuu1 && tput dl1
-    done
-    msg -ama "Domain/IP code server: $link"
-    while [[ ${linkportNginx} = "" ]]; do
-        read -p "$(msg -ama "Port untuk akses vs code:") " linkportNginx
-        tput cuu1 && tput dl1
-    done
-    msg -ama "Port code server: $linkportNginx"
-    while [[ ${passwordLogin} = "" ]]; do
-        read -p "$(msg -ama "Password Login untuk akses vs code:") " passwordLogin
-        tput cuu1 && tput dl1
-    done
-    pCode="1905"
-    msg -ama "Port untuk code server: $passwordLogin"
+  msg -bar "Pertanyaan"
+  while [[ ${link} = "" ]]; do
+    read -p "$(msg -ama "Domain/IP untuk code-server:") " link
+    tput cuu1 && tput dl1
+  done
+  msg -ama "Domain/IP code server: $link"
+  while [[ ${linkportNginx} = "" ]]; do
+    read -p "$(msg -ama "Port untuk akses vs code:") " linkportNginx
+    tput cuu1 && tput dl1
+  done
+  msg -ama "Port code server: $linkportNginx"
+  while [[ ${passwordLogin} = "" ]]; do
+    read -p "$(msg -ama "Password Login untuk akses vs code:") " passwordLogin
+    tput cuu1 && tput dl1
+  done
+  pCode="1905"
+  msg -ama "Port untuk code server: $passwordLogin"
+}
+
+cek_versi() {
+  if [ "${EDGE-}" ]; then
+    version="$(curl -fsSL https://api.github.com/repos/coder/code-server/releases | awk 'match($0,/.*"html_url": "(.*\/releases\/tag\/.*)".*/)' | head -n 1 | awk -F '"' '{print $4}')"
+  else
+    version="$(curl -fsSLI -o /dev/null -w "%{url_effective}" https://github.com/coder/code-server/releases/latest)"
+  fi
+  version="${version#https://github.com/coder/code-server/releases/tag/}"
+  version="${version#v}"
+  echo "$version"
+}
+cek_versi
+
+arch() {
+  uname_m=$(uname -m)
+  case $uname_m in
+  aarch64) echo arm64 ;;
+  x86_64) echo amd64 ;;
+  *) echo "$uname_m" ;;
+  esac
+}
+
+os() {
+  uname="$(uname)"
+  case $uname in
+  Linux) echo linux ;;
+  Darwin) echo macos ;;
+  FreeBSD) echo freebsd ;;
+  *) echo "$uname" ;;
+  esac
+}
+
+LinkValid() {
+  archt=arch
+  url=https://github.com/coder/code-server/releases/download/v$version/code-server_"$version"_$archt.deb
 }
 
 installCodeServer() {
-    msg -bar "Tahap kedua"
-    versicod="4.5.2"
-    msg -ama "Download code server versi $versicod"
-    wget https://github.com/coder/code-server/releases/download/v$versicod/code-server_"$versicod"_amd64.deb &>/dev/null
-    msg -ama "Menginstall Code Server..."
-    sudo dpkg -i code*.deb &>/dev/null
-    while [[ ${yesHttps} != @(s|S|y|Y|n|N|t|T) ]]; do
-        read -p "$(msg -ama "Apakah anda ingin menginstall Mode HTTPS (Y/T):") " yesHttps
-        tput cuu1 && tput dl1
-    done
-    porthttp=$linkportNginx
-    if [[ yesHttps = @(s|S|y|Y) ]]; then
-        porthttp=80
-    fi
+  if [[ $(os) != 'linux' ]]; then
+    msg -ama "Maaf os yang harus digunakan yaitu linux!"
+    exit 1
+  fi
 
-    sudo echo """[Unit]
+  msg -bar "Tahap kedua"
+  msg -ama "Download code server versi $version"
+  wget https://github.com/coder/code-server/releases/download/v$version/code-server_"$version"_amd64.deb &>/dev/null
+  msg -ama "Menginstall Code Server..."
+  sudo dpkg -i code*.deb &>/dev/null
+  while [[ ${yesHttps} != @(s|S|y|Y|n|N|t|T) ]]; do
+    read -p "$(msg -ama "Apakah anda ingin menginstall Mode HTTPS (Y/T):") " yesHttps
+    tput cuu1 && tput dl1
+  done
+  porthttp=$linkportNginx
+  if [[ yesHttps = @(s|S|y|Y) ]]; then
+    porthttp=80
+  fi
+
+  sudo echo """[Unit]
 Description=code-server
 After=nginx.service
 
@@ -49,19 +89,19 @@ Restart=always
 [Install]
 WantedBy=multi-user.target
     """ >/lib/systemd/system/code-server.service
-    msg -ama "Memulai code server..."
-    systemctl start code-server &>/dev/null
+  msg -ama "Memulai code server..."
+  systemctl start code-server &>/dev/null
 
-    if [[ $(dpkg --get-selections | grep -w "apache2" | head -1) ]]; then
-        msg -ama "Sedang menghentikan apache2..."
-        service apache2 stop
-    fi
+  if [[ $(dpkg --get-selections | grep -w "apache2" | head -1) ]]; then
+    msg -ama "Sedang menghentikan apache2..."
+    service apache2 stop
+  fi
 
-    msg -ama "Menghidupkan code server secara otomatis..."
-    systemctl enable code-server &>/dev/null
+  msg -ama "Menghidupkan code server secara otomatis..."
+  systemctl enable code-server &>/dev/null
 
-    msg -ama "Menyeting nginx untuk code server..."
-    echo """server {
+  msg -ama "Menyeting nginx untuk code server..."
+  echo """server {
 listen $porthttp;
 
 server_name $link;
@@ -74,43 +114,43 @@ location / {
     }
 }
     """ >/etc/nginx/sites-available/code-server.conf
-    rm /etc/nginx/sites-available/default /etc/nginx/sites-enabled/default &>/dev/null
-    ln -s /etc/nginx/sites-available/code-server.conf /etc/nginx/sites-enabled/code-server.conf &>/dev/null
-    nginx -t &>/dev/null
-    msg -ama "Merestart nginx"
-    systemctl restart nginx &>/dev/null
-    rm code* &>/dev/null
+  rm /etc/nginx/sites-available/default /etc/nginx/sites-enabled/default &>/dev/null
+  ln -s /etc/nginx/sites-available/code-server.conf /etc/nginx/sites-enabled/code-server.conf &>/dev/null
+  nginx -t &>/dev/null
+  msg -ama "Merestart nginx"
+  systemctl restart nginx &>/dev/null
+  rm code* &>/dev/null
 
-    if [[ $yesHttps = @(s|S|y|Y) ]]; then
-        httpsCode
-    else
-        msg -ama "Setup code server selesai"
-        msg -ama "Silahkan buka localhost:$linkportNginx"
-    fi
+  if [[ $yesHttps = @(s|S|y|Y) ]]; then
+    httpsCode
+  else
+    msg -ama "Setup code server selesai"
+    msg -ama "Silahkan buka localhost:$linkportNginx"
+  fi
 }
 
 httpsCode() {
-    msg -bar "Tahap Terakhir"
-    msg -ne "Untuk menginstall ssl"
-    msg -ne "Harus mempunyai domain!" && read enter
+  msg -bar "Tahap Terakhir"
+  msg -ne "Untuk menginstall ssl"
+  msg -ne "Harus mempunyai domain!" && read enter
+  tput cuu1 && tput dl1
+  read -e -p "$(msg -ama "Domain untuk code-server:") " -i $link
+  while [[ ${link} = "" ]]; do
+    read -p "$(msg -ama "IP untuk code-server:") " link
     tput cuu1 && tput dl1
-    read -e -p "$(msg -ama "Domain untuk code-server:") " -i $link
-    while [[ ${link} = "" ]]; do
-        read -p "$(msg -ama "IP untuk code-server:") " link
-        tput cuu1 && tput dl1
-    done
-    msg -ama "====== Menginstall Certbot ======"
-    sudo apt install python3-certbot-nginx -y &>/dev/null
+  done
+  msg -ama "====== Menginstall Certbot ======"
+  sudo apt install python3-certbot-nginx -y &>/dev/null
 
-    msg -ama "Setelah ini akan menjadikan https"
-    msg -ne "Enter untuk melanjutkan" && read enter
-    tput cuu1 && tput dl1
+  msg -ama "Setelah ini akan menjadikan https"
+  msg -ne "Enter untuk melanjutkan" && read enter
+  tput cuu1 && tput dl1
 
-    ######## install ssl untuk code server #####################
-    sudo certbot --non-interactive --redirect --nginx -d $link --agree-tos -m admin@$link
+  ######## install ssl untuk code server #####################
+  sudo certbot --non-interactive --redirect --nginx -d $link --agree-tos -m admin@$link
 
-    msg -ama "Sedang mengatur SSL - 2020 - Grade A+"
-    echo """# This file contains important security parameters. If you modify this file
+  msg -ama "Sedang mengatur SSL - 2020 - Grade A+"
+  echo """# This file contains important security parameters. If you modify this file
 # manually, Certbot will be unable to automatically provide future security
 # updates. Instead, Certbot will print and log an error message with a path to
 # the up-to-date file that you will need to refer to when manually updating
@@ -135,8 +175,8 @@ add_header X-Frame-Options DENY;
 add_header X-XSS-Protection \"1; mode=block\";
     """ >/etc/letsencrypt/options-ssl-nginx.conf
 
-    msg -ama "Mengatur port https di nginx"
-    echo """server {
+  msg -ama "Mengatur port https di nginx"
+  echo """server {
   listen $linkportNginx ssl http2;
 
   server_name $link;
@@ -154,12 +194,12 @@ add_header X-XSS-Protection \"1; mode=block\";
   include /etc/letsencrypt/options-ssl-nginx.conf; # managed by Certbot
   ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem; # managed by Certbot
     }""" >/etc/nginx/sites-available/code-server.conf
-    msg -ama "Mengatur SSL Selesai!"
-    msg -ama "Sedang merestart Nginx"
-    service nginx restart
-    msg -ama "Merestart Selesai!"
+  msg -ama "Mengatur SSL Selesai!"
+  msg -ama "Sedang merestart Nginx"
+  service nginx restart
+  msg -ama "Merestart Selesai!"
 
-    [[ $(dpkg --get-selections | grep -w "ufw" | head -1) ]] || (ufw allow $linkportNginx &>/dev/null)
+  [[ $(dpkg --get-selections | grep -w "ufw" | head -1) ]] || (ufw allow $linkportNginx &>/dev/null)
 }
 
 buatVariabelCode
