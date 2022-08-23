@@ -102,14 +102,12 @@ httpsCode() {
     msg -ama "====== Menginstall Certbot ======"
     sudo apt install python3-certbot-nginx -y &>/dev/null
 
-    msg -ama "Harap isi semua yang diperlukan"
-    msg -ama "Lalu akan muncul Pilihan 1 atau 2"
-    msg -ama "Pilih 1 saja"
+    msg -ama "Setelah ini akan menjadikan https"
     msg -ne "Enter untuk melanjutkan" && read enter
     tput cuu1 && tput dl1
 
     ######## install ssl untuk code server #####################
-    sudo certbot --nginx -d $link --agree-tos --register-unsafely-without-email
+    sudo certbot --non-interactive --redirect --nginx -d $link --agree-tos -m admin@$link
 
     msg -ama "Sedang mengatur SSL - 2020 - Grade A+"
     echo """# This file contains important security parameters. If you modify this file
